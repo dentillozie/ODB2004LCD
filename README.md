@@ -1,5 +1,7 @@
 # ODB2004LCD
 
+VERY MUCH WIP
+
 A 20 by 4  LCD odb2 car screen.
 
 
