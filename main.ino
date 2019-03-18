@@ -1,12 +1,18 @@
+
 // include the library code:
 #include <LiquidCrystal.h>
-#include "CurieIMU.h"
+#include <Arduino.h>
+#include <Wire.h>
+#include <OBD2UART.h>
+
+
+COBD obd;
 
 
 const int rs = 9, en = 8, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-String Version = "V0.0.1 Pre-Alpha";
+String Version = "V0.0.3 Pre-Alpha";
 // These constants won't change. They're used to give names to the pins used:
 const int analogBtn = A5;
 const int analogInPin2 = A0;// Analog input pin that the potentiometer is attached to
@@ -17,8 +23,11 @@ int btnOutput = 0;        // value output to the PWM (analog out)
 int redLine = 7125;
 
 ///////TESTING ONLY
-int PID_RPM = 0; 
-int PID_COOLANT_TEMP = 89;
+int RPM = 0; 
+int COOLANT_TEMP = 0;
+int SPEED = 0; 
+int ENGINE_LOAD = 0;
+
 
 int ledState = LOW;  
 
@@ -36,15 +45,16 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, ledState);
   
-  Serial.begin(9600);
-  
+ 
   lcd.begin(20, 4);
   lcd.print("NurburgRing Clio172");
   lcd.setCursor(0, 1);
   lcd.print(Version);
   lcd.setCursor(6, 3);
   lcd.print("Loading");
-  delay(1450);
+  obd.begin();
+  // initiate OBD-II connection until success
+  while (!obd.init());  
   lcd.clear();
 }
 
@@ -88,15 +98,16 @@ void screen1()
 
 
   lcd.setCursor(0, 0);
-  int PID_RPM = map(analogRead(analogInPin2), 0, 1023, 0, 7800);
-  int PID_COOLANT_TEMP = map(analogRead(analogInPin2), 0, 1023, 0, 130);
-
-
-  if(PID_RPM < redLine && ledState == HIGH)
+  obd.readPID(PID_RPM, RPM);
+  obd.readPID(PID_COOLANT_TEMP, COOLANT_TEMP);
+  obd.readPID(PID_SPEED, SPEED);
+  obd.readPID(PID_ENGINE_LOAD, ENGINE_LOAD);
+    
+  if(RPM < redLine && ledState == HIGH)
   { 
     digitalWrite(ledPin, LOW);
   }
-  if(PID_RPM >= redLine)
+  if(RPM >= redLine)
   { 
     if (currentMillis - previousMillis >= interval) {
       previousMillis = currentMillis;
@@ -109,21 +120,56 @@ void screen1()
       digitalWrite(ledPin, ledState);
     }
   }
- if(PID_RPM < 100) lcd.print("Car: OFF"); 
- if(PID_RPM < 1000 && PID_RPM > 100) lcd.print("0");
- if(PID_RPM > 100){
-   lcd.print(PID_RPM);
+ if(RPM < 100) lcd.print("Car: OFF"); 
+ if(RPM < 1000 && RPM > 100) lcd.print("0");
+ if(RPM > 100){
+   lcd.print(RPM);
    lcd.print(" RPM");
  }
- if(PID_COOLANT_TEMP < 100)
+ if(COOLANT_TEMP < 100)
  {
    lcd.setCursor(15, 0); lcd.print(" ");
-   lcd.print(PID_COOLANT_TEMP); lcd.print(" C");
+   lcd.print(COOLANT_TEMP); lcd.print(" C");
  }
- if(PID_COOLANT_TEMP > 99)
+ if(COOLANT_TEMP > 99)
  {
    lcd.setCursor(15, 0);
-   lcd.print(PID_COOLANT_TEMP); lcd.print(" C");
+   lcd.print(COOLANT_TEMP); lcd.print(" C");
+ }
+ 
+ if(SPEED < 10)
+ {
+   lcd.setCursor(0, 1); lcd.print("  ");
+   lcd.print(SPEED); lcd.print(" km/h");
+ }
+ if(SPEED > 9 && SPEED < 100)
+ {
+   lcd.setCursor(0, 1); lcd.print(" ");
+   lcd.print(SPEED); lcd.print(" km/h");
+ }
+ 
+ if(SPEED > 99)
+ {
+   lcd.setCursor(0, 1);
+   lcd.print(SPEED); lcd.print(" km/h");
+ }
+
+ lcd.setCursor(12, 1);
+ lcd.print("Load ");
+ if(ENGINE_LOAD < 10)
+ {
+   lcd.setCursor(17, 1); lcd.print("  ");
+   lcd.print(ENGINE_LOAD);
+ }
+ if(ENGINE_LOAD > 9 && ENGINE_LOAD < 100)
+ {
+   lcd.setCursor(17, 1); lcd.print(" ");
+   lcd.print(ENGINE_LOAD);
+ }
+ if(ENGINE_LOAD > 99)
+ {
+   lcd.setCursor(17, 1);
+   lcd.print(ENGINE_LOAD);
  }
 
  lcd.setCursor(0, 3);
@@ -138,54 +184,4 @@ void screen2()
 
  lcd.setCursor(0, 3);
  lcd.print("SCREEN 2");
-}
-
-
-
-
-void Menu(){
-  
-  sensorValue = analogRead(analogBtn);
-  btnOutput = map(sensorValue, 0, 1023, 0, 255);
-  
-  if(sensorValue < 150) //back
-  {
-        Serial.print("sensor = ");
-        Serial.print(sensorValue);
-        Serial.print("\t output = ");
-        Serial.print(btnOutput);
-        Serial.print("\t btn = ");
-        Serial.println("back");
-        lcd.print("back");
-  }
-  if(sensorValue > 150 && sensorValue < 300 ) //down
-  {
-        Serial.print("sensor = ");
-        Serial.print(sensorValue);
-        Serial.print("\t output = ");
-        Serial.print(btnOutput);
-        Serial.print("\t btn = ");
-        Serial.println("down");
-        lcd.print("down");
-  }
-    if(sensorValue > 300 && sensorValue < 500 ) //menu
-  {
-        Serial.print("sensor = ");
-        Serial.print(sensorValue);
-        Serial.print("\t output = ");
-        Serial.print(btnOutput);
-        Serial.print("\t btn = ");
-        Serial.println("menu");
-        lcd.print("menu");
-  }
-    if(sensorValue > 500 && sensorValue < 800 ) //enter
-  {
-        Serial.print("sensor = ");
-        Serial.print(sensorValue);
-        Serial.print("\t output = ");
-        Serial.print(btnOutput);
-        Serial.print("\t btn = ");
-        Serial.println("enter");
-        lcd.print("enter");
-  }
 }
