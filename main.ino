@@ -12,7 +12,7 @@ COBD obd;
 const int rs = 9, en = 8, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-String Version = "V0.0.3 Pre-Alpha";
+String Version = "V0.0.4 Alpha";
 // These constants won't change. They're used to give names to the pins used:
 const int analogBtn = A5;
 const int analogInPin2 = A0;// Analog input pin that the potentiometer is attached to
@@ -171,7 +171,9 @@ void screen1()
    lcd.setCursor(17, 1);
    lcd.print(ENGINE_LOAD);
  }
-
+ lcd.setCursor(0, 2);
+ lcd.print(obd.getVoltage(), 1);
+ lcd.print("Volt");
  lcd.setCursor(0, 3);
 
  lcd.setCursor(0, 3);
