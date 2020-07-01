@@ -66,11 +66,7 @@ void setup() {
   lcd.setCursor(6, 3);
   lcd.print("Loading");
   sensorValue = analogRead(analogBtn);
-  if(sensorValue > 300 && sensorValue < 500 ) //menu
-  {
-        ReadCodes();
-  }
-//  sensorValue = 0;
+
   obd.begin();
   // initiate OBD-II connection until success
   while (!obd.init());
