@@ -22,7 +22,7 @@ bool debug = false;
 const int rs = 9, en = 8, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-String Version = "V0.0.5 Alpha";
+String Version = "V0.0.6 Alpha";
 // These constants won't change. They're used to give names to the pins used:
 const int analogBtn = A5;
 const int analogInPin2 = A0;// Analog input pin that the potentiometer is attached to
@@ -68,15 +68,16 @@ void setup() {
   sensorValue = analogRead(analogBtn);
   if(sensorValue > 300 && sensorValue < 500 ) //menu
   {
-        debug=true;
+        ReadCodes();
   }
-  sensorValue = 0;
+//  sensorValue = 0;
   obd.begin();
   // initiate OBD-II connection until success
-  if(debug==false) //menu
+  while (!obd.init());
+  if(sensorValue > 300 && sensorValue < 500 ) //menu
   {
-       while (!obd.init());  
-  }
+        ReadCodes();
+  }  
   lcd.clear();
 }
 
@@ -194,6 +195,39 @@ void screen1()
   }
 
 }
+
+void ReadCodes()
+{
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  uint16_t codes[6];
+  lcd.print("Reading codes...");
+  delay(3000); 
+  byte dtcCount = obd.readDTC(codes, 6);
+  if (dtcCount == 0) {
+    lcd.setCursor(0, 1);
+    lcd.print("No DTC"); 
+  } else {
+    lcd.print("failts found:");
+    lcd.print(dtcCount); 
+    lcd.setCursor(0, 1);
+    lcd.print("DTC:");
+    for (byte n = 0; n < dtcCount; n++) {
+      lcd.print(' ');
+      lcd.print(codes[n], HEX);
+      if(n=1)
+      {
+          lcd.setCursor(0, 2);
+      }
+      if(n=3)
+      {
+          lcd.setCursor(0, 3);
+      }
+    }
+  }
+  delay(5000);
+}
+
 
 void RPMtoLEDmap(int RPM)
 {
