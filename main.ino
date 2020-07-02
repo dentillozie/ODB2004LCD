@@ -66,7 +66,7 @@ void setup() {
   lcd.setCursor(6, 3);
   lcd.print("Loading");
   sensorValue = analogRead(analogBtn);
-
+  lcd.print(sensorValue);
   obd.begin();
   // initiate OBD-II connection until success
   while (!obd.init());
@@ -200,28 +200,42 @@ void ReadCodes()
   lcd.print("Reading codes...");
   delay(3000); 
   byte dtcCount = obd.readDTC(codes, 6);
-  if (dtcCount == 0) {
-    lcd.setCursor(0, 1);
-    lcd.print("No DTC"); 
-  } else {
-    lcd.print("failts found:");
-    lcd.print(dtcCount); 
-    lcd.setCursor(0, 1);
-    lcd.print("DTC:");
-    for (byte n = 0; n < dtcCount; n++) {
-      lcd.print(' ');
-      lcd.print(codes[n], HEX);
-      if(n=1)
-      {
-          lcd.setCursor(0, 2);
-      }
-      if(n=3)
-      {
-          lcd.setCursor(0, 3);
-      }
+  lcd.clear();
+  lcd.print("faults found:");
+  lcd.print(dtcCount); 
+  lcd.setCursor(0, 1);
+  lcd.print("DTC:");
+  for (byte n = 0; n < dtcCount; n++) {
+    lcd.print(' ');
+    lcd.print(codes[n], HEX);
+    if(n==1)
+    {
+        lcd.setCursor(0, 2);
+    }
+    if(n==3)
+    {
+        lcd.setCursor(0, 3);
     }
   }
   delay(5000);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("hold to clear DTC");
+  delay(5000);
+  sensorValue = analogRead(analogBtn);
+  if(sensorValue > 300 && sensorValue < 500 ) //menu
+  {
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("clearing DTC...");
+        delay(2000);
+        obd.clearDTC();
+  } 
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Exiting diagnostic");
+  delay(5000);
+  
 }
 
 
