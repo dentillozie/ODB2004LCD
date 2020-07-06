@@ -22,7 +22,7 @@ bool debug = false;
 const int rs = 9, en = 8, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-String Version = "V0.0.6 Alpha";
+String Version = "V0.0.11 Alpha";
 // These constants won't change. They're used to give names to the pins used:
 const int analogBtn = A5;
 const int analogInPin2 = A0;// Analog input pin that the potentiometer is attached to
@@ -31,16 +31,16 @@ int sensorValue = 0;        // value read from the pot
 int btnOutput = 0;        // value output to the PWM (analog out)
 
 //LEDSettings
-int MinRPM=5200;
-int MaxRPM=7200;
-int FlashRPM=7050;
+const int MinRPM=5200;
+const int MaxRPM=7200;
+const int FlashRPM=7050;
 
 
 ///////setting up values
 int RPM = 0; 
 int COOLANT_TEMP = 0;
 int SPEED = 0; 
-int ENGINE_LOAD = 0;
+int INTAKE_TEMP = 0;
 
 
 unsigned long previousMillis = 0; 
@@ -65,6 +65,17 @@ void setup() {
   lcd.print(Version);
   lcd.setCursor(6, 3);
   lcd.print("Loading");
+  strip.fill(strip.Color(255,0,0));
+  strip.show();
+  delay(200);
+  strip.fill(strip.Color(0,255,0));
+  strip.show();
+  delay(200);
+  strip.fill(strip.Color(0,0,255));
+  strip.show();
+  delay(200);
+  strip.fill(strip.Color(0,0,0));
+  strip.show();
   sensorValue = analogRead(analogBtn);
   lcd.print(sensorValue);
   obd.begin();
@@ -86,11 +97,16 @@ void loop() {
   obd.readPID(PID_RPM, RPM);
   obd.readPID(PID_COOLANT_TEMP, COOLANT_TEMP);
   obd.readPID(PID_SPEED,SPEED);
-  obd.readPID(PID_ENGINE_LOAD, ENGINE_LOAD);
-  
+  obd.readPID(PID_INTAKE_TEMP, INTAKE_TEMP);
+
+  if(RPM<(MinRPM-100))
+  {
+    strip.fill(strip.Color(0,0,0));
+    strip.show();
+  } 
   if(RPM>(MinRPM-100))
   {
-    RPMtoLEDmap(RPM);
+    RPMtoLED(RPM);
   } 
  
   if(sensorValue < 150) //back
@@ -164,21 +180,21 @@ void screen1()
  }
 
  lcd.setCursor(12, 1);
- lcd.print("Load ");
- if(ENGINE_LOAD < 10)
+ lcd.print("iTemp ");
+ if(INTAKE_TEMP < 10)
  {
    lcd.setCursor(17, 1); lcd.print("  ");
-   lcd.print(ENGINE_LOAD);
+   lcd.print(INTAKE_TEMP);
  }
- if(ENGINE_LOAD > 9 && ENGINE_LOAD < 100)
+ if(INTAKE_TEMP > 9 && INTAKE_TEMP < 100)
  {
    lcd.setCursor(17, 1); lcd.print(" ");
-   lcd.print(ENGINE_LOAD);
+   lcd.print(INTAKE_TEMP);
  }
- if(ENGINE_LOAD > 99)
+ if(INTAKE_TEMP > 99)
  {
    lcd.setCursor(17, 1);
-   lcd.print(ENGINE_LOAD);
+   lcd.print(INTAKE_TEMP);
  }
  lcd.setCursor(0, 2);
  lcd.print(obd.getVoltage(), 1);
@@ -267,28 +283,68 @@ void RPMtoLED(int RPM)
     {
       strip.setPixelColor(0, strip.Color(0, 255, 0));
       strip.setPixelColor(1, strip.Color(0, 255, 0));
+      strip.setPixelColor(2, strip.Color(0, 0,0));
+      strip.setPixelColor(3, strip.Color(0, 0, 0));
+      strip.setPixelColor(4, strip.Color(0, 0, 0));
+      strip.setPixelColor(5, strip.Color(0, 0, 0));
+      strip.setPixelColor(6, strip.Color(0, 0, 0));
+      strip.setPixelColor(7, strip.Color(0, 0, 0));
+      strip.setPixelColor(8, strip.Color(0,0, 0));
+      strip.setPixelColor(9, strip.Color(0, 0, 0));
       strip.show();
     }
     if(engineRPM> 5800 && engineRPM< 6199)
     {
+      strip.setPixelColor(0, strip.Color(0, 255, 0));
+      strip.setPixelColor(1, strip.Color(0, 255, 0));
       strip.setPixelColor(2, strip.Color(0, 255, 0));
       strip.setPixelColor(3, strip.Color(0, 255, 0));
+      strip.setPixelColor(4, strip.Color(0, 0, 0));
+      strip.setPixelColor(5, strip.Color(0, 0, 0));
+      strip.setPixelColor(6, strip.Color(0, 0, 0));
+      strip.setPixelColor(7, strip.Color(0, 0, 0));
+      strip.setPixelColor(8, strip.Color(0,0, 0));
+      strip.setPixelColor(9, strip.Color(0, 0, 0));
       strip.show();
     }
     if(engineRPM> 6200 && engineRPM< 6499)
-    {
+    { 
+      strip.setPixelColor(0, strip.Color(0, 255, 0));
+      strip.setPixelColor(1, strip.Color(0, 255, 0));
+      strip.setPixelColor(2, strip.Color(0, 255, 0));
+      strip.setPixelColor(3, strip.Color(0, 255, 0));
       strip.setPixelColor(4, strip.Color(0, 255, 0));
       strip.setPixelColor(5, strip.Color(0, 255, 0));
+      strip.setPixelColor(6, strip.Color(0, 0, 0));
+      strip.setPixelColor(7, strip.Color(0, 0, 0));
+      strip.setPixelColor(8, strip.Color(0,0, 0));
+      strip.setPixelColor(9, strip.Color(0, 0, 0));
       strip.show();
     }
     if(engineRPM> 6500 && engineRPM< 6799)
     {
-      strip.setPixelColor(6, strip.Color(255, 255, 0));
-      strip.setPixelColor(7, strip.Color(255, 255, 0));
+      strip.setPixelColor(0, strip.Color(0, 255, 0));
+      strip.setPixelColor(1, strip.Color(0, 255, 0));
+      strip.setPixelColor(2, strip.Color(0, 255, 0));
+      strip.setPixelColor(3, strip.Color(0, 255, 0));
+      strip.setPixelColor(4, strip.Color(0, 255, 0));
+      strip.setPixelColor(5, strip.Color(0, 255, 0));
+      strip.setPixelColor(6, strip.Color(0, 0, 255));
+      strip.setPixelColor(7, strip.Color(0, 0, 255));
+      strip.setPixelColor(8, strip.Color(0,0, 0));
+      strip.setPixelColor(9, strip.Color(0, 0, 0));
       strip.show();
     }
     if(engineRPM> 6900 && engineRPM< 7049)
     {
+      strip.setPixelColor(0, strip.Color(0, 255, 0));
+      strip.setPixelColor(1, strip.Color(0, 255, 0));
+      strip.setPixelColor(2, strip.Color(0, 255, 0));
+      strip.setPixelColor(3, strip.Color(0, 255, 0));
+      strip.setPixelColor(4, strip.Color(0, 255, 0));
+      strip.setPixelColor(5, strip.Color(0, 255, 0));
+      strip.setPixelColor(6, strip.Color(0, 0, 255));
+      strip.setPixelColor(7, strip.Color(0, 0, 255));
       strip.setPixelColor(8, strip.Color(255,0, 0));
       strip.setPixelColor(9, strip.Color(255, 0, 0));
       strip.show();
